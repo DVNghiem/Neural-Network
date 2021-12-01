@@ -3,7 +3,7 @@ from utils.models import Sequential, load_model
 from utils.layers import Dense
 from utils.activations import relu, sigmoid
 from utils.losses import binary_crossentropy
-from utils.optimizers import SGD, Adagrad, RMSProp, Adam
+from utils.optimizers import SGD, Adagrad, RMSProp, Adam, LearningRateScheduler
 
 import numpy as np
 import pickle
@@ -22,6 +22,14 @@ train_x, val_x, train_y, val_y = train_test_split(
     train_x, train_y, test_size=0.1)
 
 
+def lr_schedule(epoch, lr):
+    if epoch < 5:
+        return lr
+    return lr * np.exp(-0.1)
+
+
+callback = LearningRateScheduler(lr_schedule)
+
 model = Sequential()
 model.add(Dense(128, activation=relu, input_shape=128*128))
 model.add(Dense(64, activation=relu))
@@ -31,7 +39,7 @@ model.add(Dense(1, activation=sigmoid))
 model.summary()
 model.compile(Adam(learning_rate=0.001), binary_crossentropy)
 hist = model.fit(train_x, train_y, epochs=10, batch_size=16,
-                 validation_data=(val_x, val_y))
+                 validation_data=(val_x, val_y), callback=callback)
 
 model.save('model.pkl')
 
@@ -51,15 +59,14 @@ axs[1].set_xlabel('epoch')
 axs[1].legend(['train', 'val'], loc='upper left')
 plt.show()
 
-
 model = load_model('model.pkl')
 
-img = cv2.imread('path to image')
+img = cv2.imread('./2.jpg')
 test = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 test = cv2.resize(test, (128, 128))
 test = test.reshape(1, 128*128)
 p = model.predict(test)[0, 0]
-label = 'xe dap' if p > 0.5 else 'xe hoi'
+label = 'cycle bike' if p > 0.5 else 'car'
 test = test.reshape(128, 128)
 img = cv2.putText(img, label, (50, 50),
                   cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)

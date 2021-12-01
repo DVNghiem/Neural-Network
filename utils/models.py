@@ -41,11 +41,11 @@ class Sequential(object):
         self.loss = loss
         self.accuracy = None
         if loss.__name__ == 'binary_crossentropy':
-            self.accuracy = self.__binary_accuracy
+            self.accuracy = self.binary_accuracy
         if loss.__name__ == 'cross_entropy':
-            self.accuracy = self.__softmax_accuracy
+            self.accuracy = self.softmax_accuracy
 
-    def __feed_forward(self, x):
+    def feed_forward(self, x):
         self.params = [(None, x)]
         final_result = None
         for layer in self.layers:
@@ -54,7 +54,7 @@ class Sequential(object):
             final_result = x
         return final_result
 
-    def __back_forward(self, y_true, y_pred):
+    def back_forward(self, y_true, y_pred):
         delta = []
         m = y_true.shape[0]
         error = self.loss(y_true, y_pred, grad=True) / \
@@ -75,7 +75,9 @@ class Sequential(object):
                 delta[num_layer-(i+1)][1]
             )
 
-    def fit(self, x: Any, y: Any, epochs=10, batch_size=32, validation_data=None) -> Any:
+    def fit(self, x: Any, y: Any, epochs=10, batch_size=32, validation_data=None, callback=None) -> Any:
+        if callback is not None:
+            self.callback = callback
         hist = {'train_loss': [], 'val_loss': [],
                 'train_acc': [], 'val_acc': []}
         num_batch = x.shape[0]//batch_size
@@ -99,7 +101,7 @@ class Sequential(object):
             for j in range(num_batch):
                 x_batch = x[j*batch_size:min(len(x), (j+1)*batch_size), :]
                 y_batch = y[j*batch_size:min(len(x), (j+1)*batch_size), :]
-                loss, acc = self.__train_tep(x_batch, y_batch)
+                loss, acc = self.train_tep(x_batch, y_batch)
                 train_loss.update_state(loss)
                 train_acc.update_state(acc)
 
@@ -107,7 +109,7 @@ class Sequential(object):
                           ('loss', train_loss.result())]
 
                 if validation_data is not None:
-                    y_pred = self.__feed_forward(val_x)
+                    y_pred = self.feed_forward(val_x)
                     loss = self.loss(val_y, y_pred)
                     acc = self.accuracy(y_pred, val_y)
                     val_acc.update_state(acc)
@@ -123,32 +125,34 @@ class Sequential(object):
             if validation_data is not None:
                 hist['val_loss'].append(val_loss.result())
                 hist['val_acc'].append(val_acc.result())
-
+            if callback:
+                self.optimizer = callback.update(self, i)
+        self.params = None
         return hist
 
-    def __softmax_accuracy(self, y_pred, y_true):
+    def softmax_accuracy(self, y_pred, y_true):
         y_true = np.argmax(y_true, axis=1)
         y_pred = np.argmax(y_pred, axis=1)
         y = y_pred-y_true
         num_false = np.count_nonzero(y)
         return 1-num_false/len(y)
 
-    def __binary_accuracy(self, y_pred, y_true):
+    def binary_accuracy(self, y_pred, y_true):
         y_pred[y_pred >= 0.5] = 1
         y_pred[y_pred < 0.5] = 0
         y = y_pred-y_true
         num_false = np.count_nonzero(y)
         return 1-num_false/len(y)
 
-    def __train_tep(self, x, y):
-        y_pred = self.__feed_forward(x)
-        self.__back_forward(y, y_pred)
+    def train_tep(self, x, y):
+        y_pred = self.feed_forward(x)
+        self.back_forward(y, y_pred)
         loss = self.loss(y, y_pred)
         acc = self.accuracy(y_pred, y)
         return loss, acc
 
     def predict(self, x: Any) -> Any:
-        pred = self.__feed_forward(x)
+        pred = self.feed_forward(x)
         return pred
 
     def save(self, file_name: str) -> None:

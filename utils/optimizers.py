@@ -111,3 +111,20 @@ class Adam(Optimizer):
             (np.sqrt(self.v_b_bar)+self.epsilon)
 
         return w, b
+
+
+class LearningRateScheduler:
+    def __init__(self, schedule) -> None:
+        """
+            def schedule(epoch, lr):
+                do something
+                return lr
+        """
+        self.schedule = schedule
+
+    def update(self, model, epoch):
+        optimizer = model.optimizer
+        lr = self.schedule(epoch, optimizer[0].learning_rate)
+        for i in range(len(optimizer)):
+            optimizer[i].learning_rate = lr
+        return optimizer
