@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import Any
 import numpy as np
 
 
@@ -39,7 +40,7 @@ class Adagrad(Optimizer):
         self.G_w = None
         self.G_b = None
 
-    def update(self, w, b, delta_w, delta_b):
+    def update(self, w, b, delta_w, delta_b) -> Any:
         if self.G_w is None:
             self.G_w = np.zeros_like(delta_w)
             self.G_b = np.zeros_like(delta_b)
@@ -60,7 +61,7 @@ class RMSProp(Optimizer):
         self.G_w = None
         self.G_b = None
 
-    def update(self, w, b, delta_w, delta_b):
+    def update(self, w, b, delta_w, delta_b) -> Any:
         if self.G_w is None:
             self.G_w = np.zeros_like(delta_w)
             self.G_b = np.zeros_like(delta_b)
@@ -86,7 +87,7 @@ class Adam(Optimizer):
         self.m_b = None
         self.v_b = None
 
-    def update(self, w, b, delta_w, delta_b):
+    def update(self, w, b, delta_w, delta_b) -> Any:
         if self.m_w is None:
             self.m_w = np.zeros_like(delta_w)
             self.m_b = np.zeros_like(delta_b)
