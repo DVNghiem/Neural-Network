@@ -4,7 +4,7 @@ import numpy as np
 from .layers import Layer
 from .optimizers import Optimizer
 from .utils import Progbar, MetricMean
-from copy import copy
+from copy import copy, deepcopy
 
 
 class Sequential(object):
@@ -157,9 +157,14 @@ class Sequential(object):
         pred = self.feed_forward(x)
         return pred
 
-    def save(self, file_name: str) -> None:
+    def save(self, file_name: str, save_optimizer=True) -> None:
         with open(file_name, 'wb') as f:
-            pickle.dump(self, f)
+            if save_optimizer:
+                pickle.dump(self, f)
+            else:
+                obj = deepcopy(self)
+                del obj.optimizer
+                pickle.dump(obj, f)
 
 
 def load_model(file_name: str) -> object:

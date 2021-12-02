@@ -29,7 +29,7 @@ def lr_schedule(epoch, lr):
 
 
 callback = LearningRateScheduler(lr_schedule)
-
+model = load_model('model.pkl')
 model = Sequential()
 model.add(Dense(128, activation=Relu(), input_shape=128*128))
 model.add(Dense(64, activation=Relu()))
@@ -41,7 +41,7 @@ model.compile(optimizer=Adam(), loss=BinaryCrossentropy())
 hist = model.fit(train_x, train_y, epochs=10, batch_size=16,
                  validation_data=(val_x, val_y), callback=callback)
 
-model.save('model.pkl')
+model.save('model.pkl', save_optimizer=False)
 
 fig, axs = plt.subplots(2)
 axs[0].plot(hist['train_acc'])
