@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 from utils.models import Sequential, load_model
 from utils.layers import Dense
-from utils.activations import relu, sigmoid
-from utils.losses import binary_crossentropy
+from utils.activations import Relu, Sigmoid
+from utils.losses import BinaryCrossentropy
 from utils.optimizers import SGD, Adagrad, RMSProp, Adam, LearningRateScheduler
 
 import numpy as np
@@ -31,13 +31,13 @@ def lr_schedule(epoch, lr):
 callback = LearningRateScheduler(lr_schedule)
 
 model = Sequential()
-model.add(Dense(128, activation=relu, input_shape=128*128))
-model.add(Dense(64, activation=relu))
-model.add(Dense(32, activation=relu))
-model.add(Dense(32, activation=relu))
-model.add(Dense(1, activation=sigmoid))
+model.add(Dense(128, activation=Relu(), input_shape=128*128))
+model.add(Dense(64, activation=Relu()))
+model.add(Dense(32, activation=Relu()))
+model.add(Dense(32, activation=Relu()))
+model.add(Dense(1, activation=Sigmoid()))
 model.summary()
-model.compile(Adam(learning_rate=0.001), binary_crossentropy)
+model.compile(optimizer=Adam(), loss=BinaryCrossentropy())
 hist = model.fit(train_x, train_y, epochs=10, batch_size=16,
                  validation_data=(val_x, val_y), callback=callback)
 

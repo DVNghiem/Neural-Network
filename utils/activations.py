@@ -1,26 +1,59 @@
+from typing import Any
 import numpy as np
+from abc import abstractmethod
 
 
-def sigmoid(x, grad=False):
-    if grad:
-        return sigmoid(x)*(1-sigmoid(x))
-    return 1.0/(1.0 + np.exp(-x))
+class Activation:
+    def __init__(self) -> None:
+        pass
+
+    def __call__(self, x) -> Any:
+        return self.feed_forward(x)
+
+    @abstractmethod
+    def feed_forward(self, x):
+        raise NotImplementedError
+
+    @abstractmethod
+    def backward(self, x):
+        raise NotADirectoryError
 
 
-def relu(x, grad=False):
-    if grad:
+class Sigmoid(Activation):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def feed_forward(self, x):
+        return 1.0/(1.0+np.exp(-x))
+
+    def backward(self, x):
+        fn = self.feed_forward(x)
+        return fn*(1-fn)
+
+
+class Relu(Activation):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def feed_forward(self, x):
+        return np.maximum(x, 0)
+
+    def backward(self, x):
         x[x <= 0] = 0
         x[x > 0] = 1
         return x
-    return np.maximum(x, 0)
 
 
-def softmax(x, grad=False):
-    if grad:
+class Softmax(Activation):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def feed_forward(self, x):
+        e_X = np.exp(x - np.max(x, axis=self.dim, keepdims=True))
+        return e_X / e_X.sum(axis=self.dim, keepdims=True)
+
+    def backward(self, x):
         J = - x[..., None] * x[:, None, :]
         iy, ix = np.diag_indices_from(J[0])
         J[:, iy, ix] = x * (1. - x)
         return J.sum(axis=1)
-
-    exps = np.exp(x - np.max(x, axis=1).reshape(-1, 1))
-    return exps*1.0 / np.sum(exps, axis=1)[:, None]

@@ -24,6 +24,7 @@ class Dense(Layer):
     def initialParam(self):
         self.weight = np.random.normal(
             loc=0, scale=0.01, size=(self.input_shape, self.unit))
+
         self.bias = np.random.randn(1, self.unit)
 
     def feed_forward(self, x):

@@ -40,9 +40,9 @@ class Sequential(object):
         self.optimizer = [copy(optimizer) for _ in self.layers]
         self.loss = loss
         self.accuracy = None
-        if loss.__name__ == 'binary_crossentropy':
+        if loss.__str__() == 'BinaryCrossentropy':
             self.accuracy = self.binary_accuracy
-        if loss.__name__ == 'cross_entropy':
+        if loss.__str__() == 'CategoricalCrossentropy':
             self.accuracy = self.softmax_accuracy
 
     def feed_forward(self, x):
@@ -57,12 +57,14 @@ class Sequential(object):
     def back_forward(self, y_true, y_pred):
         delta = []
         m = y_true.shape[0]
-        error = self.loss(y_true, y_pred, grad=True) / \
-            m*self.layers[-1].activation(self.params[-1][0], grad=True)
+        error = self.loss.grad(y_true, y_pred)
+        error = error / \
+            m*self.layers[-1].activation.backward(self.params[-1][0])
         delta.append((self.params[-2][1].T@error, np.mean(error)))
         for i in range(len(self.layers)-2, -1, -1):
             error = error @ self.layers[i+1].weight.T * \
-                self.layers[i].activation(self.params[i+1][0], grad=True)
+                self.layers[i].activation.backward(
+                    self.params[i+1][0])
             d = self.params[i][1].T@error
             delta.append((d, np.mean(error)))
         num_layer = len(self.layers)
