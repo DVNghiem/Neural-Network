@@ -1,8 +1,9 @@
 import pickle
-from typing import Any
+from typing import Any, Dict
 import numpy as np
 from .layers import Layer
 from .optimizers import Optimizer
+from .losses import Loss
 from .utils import Progbar, MetricMean
 from copy import copy, deepcopy
 
@@ -36,7 +37,7 @@ class Sequential(object):
         text += f"Total Params: {np.sum(list_param)}"
         print(text)
 
-    def compile(self, optimizer: Optimizer, loss: object) -> None:
+    def compile(self, optimizer: Optimizer, loss: Loss) -> None:
         self.optimizer = [copy(optimizer) for _ in self.layers]
         self.loss = loss
         self.accuracy = None
@@ -49,7 +50,7 @@ class Sequential(object):
         self.params = [(None, x)]
         final_result = None
         for layer in self.layers:
-            z, x = layer.feed_forward(x)
+            z, x = layer(x)
             self.params.append((z, x))
             final_result = x
         return final_result
@@ -60,12 +61,12 @@ class Sequential(object):
         error = self.loss.grad(y_true, y_pred)
         error = error / \
             m*self.layers[-1].activation.backward(self.params[-1][0])
-        delta.append((self.params[-2][1].T@error, np.mean(error)))
+        delta.append((self.params[-2][1].T @ error, np.mean(error)))
         for i in range(len(self.layers)-2, -1, -1):
             error = error @ self.layers[i+1].weight.T * \
                 self.layers[i].activation.backward(
                     self.params[i+1][0])
-            d = self.params[i][1].T@error
+            d = self.params[i][1].T @ error
             delta.append((d, np.mean(error)))
         num_layer = len(self.layers)
         for i in range(num_layer-1, -1, -1):
@@ -73,11 +74,18 @@ class Sequential(object):
                 self.optimizer[i].update(
                     self.layers[i].weight,
                     self.layers[i].bias,
-                delta[num_layer-(i+1)][0],
-                delta[num_layer-(i+1)][1]
+                    delta[num_layer-(i+1)][0],
+                    delta[num_layer-(i+1)][1]
             )
 
-    def fit(self, x: Any, y: Any, epochs=10, batch_size=32, validation_data=None, callback=None) -> Any:
+    def fit(self,
+            x: Any,
+            y: Any,
+            epochs=10,
+            batch_size=32,
+            validation_data=None,
+            callback=None) -> Dict:
+
         if callback is not None:
             self.callback = callback
         hist = {'train_loss': [], 'val_loss': [],
@@ -103,7 +111,7 @@ class Sequential(object):
             for j in range(num_batch):
                 x_batch = x[j*batch_size:min(len(x), (j+1)*batch_size), :]
                 y_batch = y[j*batch_size:min(len(x), (j+1)*batch_size), :]
-                loss, acc = self.train_tep(x_batch, y_batch)
+                loss, acc = self.train_step(x_batch, y_batch)
                 train_loss.update_state(loss)
                 train_acc.update_state(acc)
 
@@ -132,28 +140,28 @@ class Sequential(object):
         self.params = None
         return hist
 
-    def softmax_accuracy(self, y_pred, y_true):
+    def softmax_accuracy(self, y_pred, y_true) -> float:
         y_true = np.argmax(y_true, axis=1)
         y_pred = np.argmax(y_pred, axis=1)
         y = y_pred-y_true
         num_false = np.count_nonzero(y)
         return 1-num_false/len(y)
 
-    def binary_accuracy(self, y_pred, y_true):
+    def binary_accuracy(self, y_pred, y_true) -> float:
         y_pred[y_pred >= 0.5] = 1
         y_pred[y_pred < 0.5] = 0
         y = y_pred-y_true
         num_false = np.count_nonzero(y)
         return 1-num_false/len(y)
 
-    def train_tep(self, x, y):
+    def train_step(self, x, y) -> Any:
         y_pred = self.feed_forward(x)
         self.back_forward(y, y_pred)
         loss = self.loss(y, y_pred)
         acc = self.accuracy(y_pred, y)
         return loss, acc
 
-    def predict(self, x: Any) -> Any:
+    def predict(self, x):
         pred = self.feed_forward(x)
         return pred
 
@@ -166,7 +174,7 @@ class Sequential(object):
                 del obj.optimizer
                 pickle.dump(obj, f)
 
-
-def load_model(file_name: str) -> object:
-    with open(file_name, 'rb') as f:
-        return pickle.load(f)
+    @staticmethod
+    def load_model(file_name: str) -> object:
+        with open(file_name, 'rb') as f:
+            return pickle.load(f)

@@ -8,8 +8,7 @@ class Optimizer:
         self.learning_rate = learning_rate
 
     @abstractmethod
-    def update(self, w, b, delta_w, delta_b):
-        pass
+    def update(self, w, b, delta_w, delta_b) -> Any: ...
 
     def __str__(self) -> str:
         return self.__name__
@@ -22,7 +21,7 @@ class SGD(Optimizer):
         self.v_w = None
         self.v_b = None
 
-    def update(self, w, b, delta_w, delta_b):
+    def update(self, w, b, delta_w, delta_b) -> Any:
         if self.v_w is None:
             self.v_w = np.zeros_like(w)
             self.v_b = np.zeros_like(b)
@@ -122,7 +121,7 @@ class LearningRateScheduler:
         """
         self.schedule = schedule
 
-    def update(self, model, epoch):
+    def update(self, model: object, epoch: int) -> Any:
         optimizer = model.optimizer
         lr = self.schedule(epoch, optimizer[0].learning_rate)
         for i in range(len(optimizer)):

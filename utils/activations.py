@@ -11,12 +11,10 @@ class Activation:
         return self.feed_forward(x)
 
     @abstractmethod
-    def feed_forward(self, x):
-        raise NotImplementedError
+    def feed_forward(self, x): ...
 
     @abstractmethod
-    def backward(self, x):
-        raise NotADirectoryError
+    def backward(self, x): ...
 
 
 class Sigmoid(Activation):

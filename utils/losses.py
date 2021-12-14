@@ -8,12 +8,10 @@ class Loss:
         self.eps = eps
 
     @abstractmethod
-    def loss(self, y_true, y_pred):
-        raise NotImplementedError
+    def loss(self, y_true, y_pred): ...
 
     @abstractmethod
-    def grad(self, y_true, y_pred):
-        raise NotImplementedError
+    def grad(self, y_true, y_pred): ...
 
     def normalize(self, y):
         y = np.clip(y, self.eps, 1.0 - self.eps)

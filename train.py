@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from utils.models import Sequential, load_model
+from utils.models import Sequential
 from utils.layers import Dense
 from utils.activations import Relu, Sigmoid
 from utils.losses import BinaryCrossentropy
@@ -29,7 +29,7 @@ def lr_schedule(epoch, lr):
 
 
 callback = LearningRateScheduler(lr_schedule)
-model = load_model('model.pkl')
+
 model = Sequential()
 model.add(Dense(128, activation=Relu(), input_shape=128*128))
 model.add(Dense(64, activation=Relu()))
@@ -59,7 +59,7 @@ axs[1].set_xlabel('epoch')
 axs[1].legend(['train', 'val'], loc='upper left')
 plt.show()
 
-model = load_model('model.pkl')
+model = Sequential.load_model('./model.pkl')
 
 img = cv2.imread('./2.jpg')
 test = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
